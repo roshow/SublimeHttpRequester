@@ -4,6 +4,8 @@ import sublime_plugin
 import socket
 import types
 import threading
+import ast
+import urllib
 
 gPrevHttpRequest = ""
 
@@ -37,7 +39,7 @@ class HttpRequester(threading.Thread):
 
     HTTP_PROXY_HEADER = "USE_PROXY"
 
-    CONTENT_LENGTH_HEADER = "Content-lenght"
+    CONTENT_LENGTH_HEADER = "Content-length"
 
     MAX_BYTES_BUFFER_SIZE = 8192
 
@@ -81,7 +83,13 @@ class HttpRequester(threading.Thread):
         print requestType, " ", httpProtocol, " HOST ", url, " PORT ", port, " PAGE: ", request_page
 
         # get request headers from the lines below the http address
-        (extra_headers, requestPOSTBody, proxyURL, proxyPort) = self.extractExtraHeaders(lines)
+        (extra_headers, requestPOSTBody, proxyURL, proxyPort, params) = self.extractExtraHeaders(lines)
+
+        #roshow Start: add any params to request_page by invoking extractParams method
+        params = self.extractParams(lines)
+        if params != False:
+            request_page = request_page + params
+        #roshow End
 
         headers = {"User-Agent": FAKE_CURL_UA, "Accept": "*/*"}
 
@@ -219,6 +227,22 @@ class HttpRequester(threading.Thread):
 
         return (None, None, readingPOSTBody)
 
+    #roshow Start: extract any parameters object
+    def extractParams(self, headerLines):
+        params = False
+        numLines = len(headerLines)
+        for i in range(0, numLines):
+            if headerLines[i][0] == "{":
+                paramObj = ast.literal_eval(headerLines[i])
+                params = "?"
+                for key in paramObj:
+                    params = params + key + "=" + urllib.quote(paramObj[key]) + "&"
+                params = params[:-1]
+
+        return params
+    #roshow End
+
+
     def extractExtraHeaders(self, headerLines):
         requestPOSTBody = ""
         readingPOSTBody = False
@@ -229,6 +253,7 @@ class HttpRequester(threading.Thread):
         proxyPort = 0
 
         extra_headers = {}
+        params = ""
         if len(headerLines) > 1:
             for i in range(1, numLines):
                 lastLine = (i == numLines - 1)
@@ -246,7 +271,7 @@ class HttpRequester(threading.Thread):
 
                     requestPOSTBody = requestPOSTBody + headerLines[i] + lineBreak
 
-        return (extra_headers, requestPOSTBody, proxyURL, proxyPort)
+        return (extra_headers, requestPOSTBody, proxyURL, proxyPort, params)
 
     def getProxyURLandPort(self, proxyAddress):
         proxyURL = ""
