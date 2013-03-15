@@ -199,12 +199,16 @@ class HttpRequester(threading.Thread):
     def getHeaderNameAndValueFromLine(self, line):
         readingPOSTBody = False
 
+        #print "roshow"
+
         line = line.lstrip()
         line = line.rstrip()
 
         if line == self.HTTP_POST_BODY_START:
             readingPOSTBody = True
-        else:
+        #roshow Start: updated else to elif statement filtering out params:
+        elif line[0] != "{":
+        #roshow End
             header_parts = line.split(":")
             if len(header_parts) == 2:
                 header_name = header_parts[0].rstrip()
@@ -257,13 +261,17 @@ class HttpRequester(threading.Thread):
         if len(headerLines) > 1:
             for i in range(1, numLines):
                 lastLine = (i == numLines - 1)
+                #roshow Start: Added "headerLines[i][0] != "{""
+                #if not(readingPOSTBody) and headerLines[i][0] != "{":
+                #roshow End
                 if not(readingPOSTBody):
-                    (header_name, header_value, readingPOSTBody) = self.getHeaderNameAndValueFromLine(headerLines[i])
-                    if header_name != None:
-                        if header_name != self.HTTP_PROXY_HEADER:
-                            extra_headers[header_name] = header_value
-                        else:
-                            (proxyURL, proxyPort) = self.getProxyURLandPort(header_value)
+                    if headerLines[i][0] != "{":
+                        (header_name, header_value, readingPOSTBody) = self.getHeaderNameAndValueFromLine(headerLines[i])
+                        if header_name != None:
+                            if header_name != self.HTTP_PROXY_HEADER:
+                                extra_headers[header_name] = header_value
+                            else:
+                                (proxyURL, proxyPort) = self.getProxyURLandPort(header_value)
                 else:  # read all following lines as HTTP POST body
                     lineBreak = ""
                     if not(lastLine):
