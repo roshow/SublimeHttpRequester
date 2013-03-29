@@ -6,7 +6,19 @@
 Contact: [braindamageinc@gmail.com](mailto:braindamageinc@gmail.com)
 
 ##Summary
-Makes HTTP requests using the selected text as URL + headers. Usefull for testing REST APIs from Sublime Text 2 editor. 
+Makes HTTP requests using the selected text as URL + headers. Usefull for testing REST APIs from Sublime Text 2 editor.
+
+#Update (by roshow): Parameters for GET requests in dictionary
+I made an update to http_requester.py so you can put in the parameters for a request on a separate line from the url. So, for example, instead of:
+
+	GET http://www.youtube.com/results?search_query=batman&filters=hd
+
+You can write it like this:
+
+	GET http://www.youtube.com/results
+	{ 'search_query': 'batman', 'filters': 'hd' }
+
+Note that for this to work, you have to write the dictionary in one line without breaks. The dictionary can be written in any line following the url -- I have the script looking for anything that begins with curly brackets.
 
 ##Update: Requests are threaded now, with progress report in status bar.
 
